@@ -1,0 +1,39 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Elena Torres Fernandez
+% TSI Practica 2 - MiniZinc
+% Ejercicio 1 - Problema del cambio de monedas
+% Apartado c
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Constantes
+% Distintos importes: 13, 147, 230, 299
+int: importe = 13;
+% vector con el valor de las 9 monedas en notacion entera (centimos)  
+set of int: POS = 1..9;
+array [POS] of int: monedas = [1, 3, 5, 10, 25, 50, 100, 200, 500];
+
+% Variable
+% vector que contiene la cantidad necesaria de cada una de las 9 monedas
+array [POS] of var int: cantidades;
+
+
+% Restricciones
+% obtenemos el importe
+constraint sum(i in POS)(cantidades[i] * monedas[i]) = importe;
+% todas las cantidades deben ser positivas o 0
+constraint forall(i in POS)(cantidades[i] >= 0);
+% imponemos completar con monedas de unidades siempre que sea posible
+constraint (if ((importe div 100) = 1) then (cantidades[7] = 1) endif);
+constraint (if ((importe div 100) = 2) then (cantidades[8] = 1 \/ cantidades[7] = 2) endif);
+constraint (if ((importe div 100) = 5) then (cantidades[9] = 1 \/
+                                            (cantidades[8] = 2 /\ cantidades[7] = 1) \/
+                                            (cantidades[8] = 1 /\ cantidades[7] = 3) \/
+                                            (cantidades[7] = 5)) endif);
+
+
+% Problema de optimizacion
+solve minimize sum(i in POS)(cantidades[i]); % cambio respecto al apartado 1b
+
+% Formato salida
+output ["monedas: "] ++ ["\(fix(cantidades[i])) " | i in POS] ++
+["\ntotal monedas: \(sum(i in POS)(fix(cantidades[i])))"]
